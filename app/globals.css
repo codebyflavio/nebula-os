@@ -1,33 +1,268 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── CSS Variables ── */
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
+  --font-sans: "Space Grotesk", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", Menlo, monospace;
+
+  --nebula-bg:      #020617;
+  --glass-bg:       rgba(8, 10, 28, 0.78);
+  --glass-bg-light: rgba(15, 18, 42, 0.65);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --glass-border-focus: rgba(99, 102, 241, 0.4);
+
+  --accent-indigo: #6366F1;
+  --accent-cyan:   #06B6D4;
+  --accent-purple: #A855F7;
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+  --text-muted: #475569;
+
+  --menubar-h: 28px;
+  --dock-h: 68px;
+  --titlebar-h: 36px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: var(--nebula-bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
 }
 
-body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+/* Allow selection inside apps */
+.selectable, .selectable * { user-select: text; }
+
+/* ── Glass Surface ── */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(200%);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.10),
+    inset 0 -1px 0 rgba(0,0,0,0.15),
+    0 0 0 0.5px rgba(255,255,255,0.04),
+    0 24px 64px rgba(0,0,0,0.6);
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+.glass-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+/* ── Window ── */
+.window-frame {
+  position: absolute;
+  will-change: transform;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bg);
+  border: 1px solid rgba(255,255,255,0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.09),
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 24px rgba(0,0,0,0.4),
+    0 0 0 0.5px rgba(255,255,255,0.04);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+}
+
+/* Focused window gets an accent ring */
+.window-focused {
+  border-color: color-mix(in srgb, var(--accent-indigo) 25%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.12),
+    0 32px 80px rgba(0,0,0,0.75),
+    0 8px 24px rgba(0,0,0,0.45),
+    0 0 0 1px color-mix(in srgb, var(--accent-indigo) 18%, transparent),
+    0 0 40px color-mix(in srgb, var(--accent-indigo) 8%, transparent);
+}
+
+.window-focused .window-titlebar {
+  background: rgba(14,16,40,0.95);
+}
+
+.window-titlebar {
+  height: var(--titlebar-h);
+  min-height: var(--titlebar-h);
+  background: rgba(8,10,28,0.90);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  cursor: default;
+  -webkit-app-region: no-drag;
+  flex-shrink: 0;
+  gap: 6px;
+}
+
+.window-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Traffic lights ── */
+.traffic-lights {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.traffic-light {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+  transition: filter 0.12s ease, transform 0.12s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.traffic-light:hover { transform: scale(1.15); }
+.traffic-light:active { transform: scale(0.9); }
+
+.traffic-light.close {
+  background: #FF5F56;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.25) inset, 0 0 6px rgba(255,95,86,0.3);
+}
+.traffic-light.min {
+  background: #FFBD2E;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.25) inset, 0 0 6px rgba(255,189,46,0.3);
+}
+.traffic-light.max {
+  background: #27C93F;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,0.25) inset, 0 0 6px rgba(39,201,63,0.3);
+}
+
+/* Symbol hints on hover */
+.traffic-light-group:hover .traffic-light.close::after  { content: "×"; }
+.traffic-light-group:hover .traffic-light.min::after    { content: "−"; }
+.traffic-light-group:hover .traffic-light.max::after    { content: "+"; }
+.traffic-light::after {
+  font-size: 8px;
+  font-weight: 900;
+  color: rgba(0,0,0,0.55);
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* ── Dock ── */
+.dock-item-indicator {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.7);
+  margin: 0 auto;
+}
+
+/* ── Terminal ── */
+.terminal-output { font-family: var(--font-mono); }
+.term-prompt { color: #06B6D4; }
+.term-path   { color: #6366F1; }
+.term-success { color: #22C55E; }
+.term-error  { color: #EF4444; }
+.term-info   { color: #94A3B8; }
+.term-accent { color: #A855F7; }
+
+/* ── Spotlight ── */
+.spotlight-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(2, 6, 23, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  animation: fade-in 0.15s ease-out;
+}
+
+/* ── Notification Center ── */
+.notif-panel {
+  position: fixed;
+  top: var(--menubar-h);
+  right: 0;
+  width: 340px;
+  height: calc(100vh - var(--menubar-h));
+  z-index: 8000;
+  padding: 12px;
+  overflow-y: auto;
+  animation: slide-up 0.2s ease-out;
+}
+
+/* ── Resize handles ── */
+.resize-handle {
+  position: absolute;
+  z-index: 100;
+}
+.resize-n  { top: -3px; left: 8px; right: 8px; height: 6px; cursor: n-resize; }
+.resize-s  { bottom: -3px; left: 8px; right: 8px; height: 6px; cursor: s-resize; }
+.resize-e  { right: -3px; top: 8px; bottom: 8px; width: 6px; cursor: e-resize; }
+.resize-w  { left: -3px; top: 8px; bottom: 8px; width: 6px; cursor: w-resize; }
+.resize-ne { top: -3px; right: -3px; width: 12px; height: 12px; cursor: ne-resize; }
+.resize-nw { top: -3px; left: -3px; width: 12px; height: 12px; cursor: nw-resize; }
+.resize-se { bottom: -3px; right: -3px; width: 12px; height: 12px; cursor: se-resize; }
+.resize-sw { bottom: -3px; left: -3px; width: 12px; height: 12px; cursor: sw-resize; }
+
+/* ── Music equalizer bars ── */
+.eq-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent-cyan);
+  transform-origin: bottom;
+}
+
+/* ── Shimmer skeleton ── */
+.shimmer-bg {
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0.03) 25%,
+    rgba(255,255,255,0.08) 50%,
+    rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ── Misc ── */
+.no-drag { -webkit-app-region: no-drag; }
+.drag    { -webkit-app-region: drag; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
   }
 }
